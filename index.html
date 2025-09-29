@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Protected Commands — CRAZY SCIENTIST</title>
+<title>TOP TO- COMMANDS FOR THE BOT - CRAZY SCIENTIST</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -49,17 +49,15 @@ p.lead{margin:4px 0 0;color:rgba(232,240,255,0.8);font-size:13px}
   text-align:center;
   transition: transform .18s ease;
   user-select:none;
+  cursor:pointer;
 }
 .card:active{transform:translateY(1px)}
-.hidden-overlay{
-  pointer-events:none;
-}
 .commands-hidden .card{
-  color:transparent;
+  color:transparent;           
   text-shadow: 0 0 8px rgba(0,0,0,0.7);
   background:linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.008));
-  position:relative;
   filter: blur(3px) brightness(.85);
+  position:relative;
 }
 .commands-hidden .card::after{
   content: "🔒";
@@ -69,7 +67,6 @@ p.lead{margin:4px 0 0;color:rgba(232,240,255,0.8);font-size:13px}
   transform:translate(-50%,-50%) scale(1.3);
   font-size:22px;
   color:var(--muted);
-  opacity:0.95;
   pointer-events:none;
 }
 .commands-visible .card{ color:var(--text); filter:none; text-shadow:none }
@@ -92,7 +89,23 @@ p.lead{margin:4px 0 0;color:rgba(232,240,255,0.8);font-size:13px}
 .modal input{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);color:var(--text);outline:none}
 .modal .btn{padding:8px 12px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#07020b;font-weight:800;cursor:pointer}
 .modal .note{margin-top:10px;font-size:13px;color:var(--muted)}
-.footer{margin-top:18px;font-size:13px;color:var(--muted);text-align:center;font-weight:600}
+.footer{margin-top:18px;font-size:13px;color:var(--muted)}
+.toast{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,0.75);
+  color:#fff;
+  padding:10px 18px;
+  border-radius:12px;
+  font-size:14px;
+  opacity:0;
+  pointer-events:none;
+  transition: opacity 0.3s ease;
+  z-index:200;
+}
+.toast.show{opacity:1; pointer-events:auto;}
 @media (max-width:520px){
   .grid{grid-template-columns:repeat(2,1fr)}
   .controls{flex-direction:column;align-items:stretch}
@@ -115,7 +128,6 @@ p.lead{margin:4px 0 0;color:rgba(232,240,255,0.8);font-size:13px}
   </div>
 
   <div id="commandsArea" class="grid commands-hidden"></div>
-
   <div class="footer">Made by SAI_X with ❤️‍🔥</div>
 </div>
 
@@ -130,112 +142,92 @@ p.lead{margin:4px 0 0;color:rgba(232,240,255,0.8);font-size:13px}
   </div>
 </div>
 
-<script>
-const PASSWORD = "POLYMER35";
-const MAX_TRIES = 3;
-const LOCK_MINUTES = 5;
+<div id="toast" class="toast"></div>
 
-const COMMANDS = [
-"/violet","/cctv","/hidden_lust","/shortvideo","/nika","/superheroin","/voilet",
+<script>
+const PASSWORD="POLYMER35",MAX_TRIES=3,LOCK_MINUTES=5;
+const COMMANDS=["/violet","/cctv","/hidden_lust","/shortvideo","/nika","/superheroin","/voilet",
 "/mulan","/angela","/savannah","/video 2","/ramdom_vr","/alyxstart","/video_1",
 "/anna","/sahu","/bengalionlyfans","/random","/laddoo","/wolf","/dee","/aria six",
 "/mami","/ava","/lily","/skylar","/devil_bobo","/renee","/random_big","/mink",
-"Jazzy","/summer_b","/little_hard","/good_stuffs"
-];
+"/azzy","/summer_b","/little_hard","/good_stuffs","/isabelle","/jane","/taliyaaa"];
 
-const area = document.getElementById('commandsArea');
-const statusText = document.getElementById('statusText');
-const unlockBtn = document.getElementById('unlockBtn');
+const KEY_UNLOCKED="page_commands_unlocked",KEY_TRIES="page_commands_tries",KEY_LOCKED_UNTIL="page_commands_lockeduntil";
+const area=document.getElementById('commandsArea'),statusText=document.getElementById('statusText'),unlockBtn=document.getElementById('unlockBtn'),toast=document.getElementById('toast');
+
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 function renderCommands(){
-  area.innerHTML = "";
+  area.innerHTML="";
   COMMANDS.forEach(cmd=>{
-    const c = document.createElement('div');
-    c.className = 'card';
-    c.innerHTML = `<div class="cmd">${cmd}</div>`;
+    const c=document.createElement('div');
+    c.className='card';
+    c.innerHTML=`<div class="cmd">${escapeHtml(cmd)}</div>`;
+    c.addEventListener('click',()=>{
+      if(isUnlocked()){
+        navigator.clipboard.writeText(cmd).then(()=>showToast(`Copied: ${cmd}`));
+      } else showModal();
+    });
     area.appendChild(c);
   });
 }
 
-let tries = MAX_TRIES;
-let lockedUntil = 0;
+function showToast(msg){
+  toast.innerText=msg;
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'),2000);
+}
+
+function now(){return Date.now();}
+function getTries(){return parseInt(localStorage.getItem(KEY_TRIES)||String(MAX_TRIES),10);}
+function setTries(n){localStorage.setItem(KEY_TRIES,String(n));}
+function getLockedUntil(){return parseInt(localStorage.getItem(KEY_LOCKED_UNTIL)||'0',10);}
+function setLockedUntil(ts){localStorage.setItem(KEY_LOCKED_UNTIL,String(ts));}
+function isUnlocked(){return localStorage.getItem(KEY_UNLOCKED)==='1';}
+function setUnlocked(v){localStorage.setItem(KEY_UNLOCKED,v?'1':'0');}
 
 function updateUI(){
-  if(Date.now() < lockedUntil){
-    statusText.innerText = `Status: Locked — wait ${Math.ceil((lockedUntil-Date.now())/1000)}s`;
-    unlockBtn.disabled = true;
-  } else {
-    unlockBtn.disabled = false;
-    statusText.innerText = 'Status: Locked';
-    area.classList.remove('commands-visible');
-    area.classList.add('commands-hidden');
+  const lockedUntil=getLockedUntil();
+  if(isUnlocked()){area.classList.remove('commands-hidden');area.classList.add('commands-visible');statusText.innerText='Status: Unlocked';unlockBtn.style.display='none';}
+  else{area.classList.remove('commands-visible');area.classList.add('commands-hidden');
+    if(lockedUntil>now()){const rem=Math.ceil((lockedUntil-now())/1000);statusText.innerText=`Status: Locked — wait ${rem}s`;unlockBtn.disabled=true;startPageCountdown();}
+    else{statusText.innerText=`Status: Locked`;unlockBtn.disabled=false;}
   }
 }
 
-function startCountdown(){
-  const interval = setInterval(()=>{
-    if(Date.now() >= lockedUntil){
-      tries = MAX_TRIES;
-      lockedUntil = 0;
-      updateUI();
-      clearInterval(interval);
-    } else {
-      updateUI();
-    }
-  }, 900);
+let pageCountdownInterval=null;
+function startPageCountdown(){
+  if(pageCountdownInterval) clearInterval(pageCountdownInterval);
+  pageCountdownInterval=setInterval(()=>{
+    const lockedUntil=getLockedUntil();
+    if(lockedUntil<=now()){clearInterval(pageCountdownInterval);setTries(MAX_TRIES);setLockedUntil(0);setUnlocked(false);updateUI();}
+    else{const rem=Math.ceil((lockedUntil-now())/1000);statusText.innerText=`Status: Locked — wait ${rem}s`;}
+  },900);
 }
 
+let activeModal=null;
 function showModal(){
-  if(Date.now() < lockedUntil){
-    alert(`Page locked. Wait ${Math.ceil((lockedUntil-Date.now())/1000)} seconds.`);
-    updateUI();
-    return;
-  }
-  const tpl = document.getElementById('modalTpl').children[0].cloneNode(true);
-  document.body.appendChild(tpl);
-  const input = tpl.querySelector('#pwInput');
-  const submit = tpl.querySelector('#pwSubmit');
-  const note = tpl.querySelector('#modalNote');
-
-  note.innerText = `${tries} tries remaining`;
-  setTimeout(()=> input.focus(),120);
-
-  function closeModal(){ tpl.remove(); }
-
+  const lockedUntil=getLockedUntil();
+  if(lockedUntil>now()){alert(`Page locked. Wait ${Math.ceil((lockedUntil-now())/1000)} seconds.`);updateUI();return;}
+  const tpl=document.getElementById('modalTpl').children[0].cloneNode(true);
+  document.body.appendChild(tpl);activeModal=tpl;
+  const input=tpl.querySelector('#pwInput'),submit=tpl.querySelector('#pwSubmit'),note=tpl.querySelector('#modalNote');
+  let tries=getTries();note.innerText=`${tries} tries remaining`;
+  setTimeout(()=>input.focus(),120);
+  function closeModal(){if(activeModal){activeModal.remove();activeModal=null;}}
   function attempt(){
-    const val = input.value || "";
-    if(val === PASSWORD){
-      area.classList.remove('commands-hidden');
-      area.classList.add('commands-visible');
-      statusText.innerText = 'Status: Unlocked';
-      unlockBtn.style.display = 'none';
-      closeModal();
-      alert('✅ Commands unlocked');
-    } else {
-      tries--;
-      if(tries <=0){
-        lockedUntil = Date.now() + LOCK_MINUTES*60*1000;
-        closeModal();
-        updateUI();
-        startCountdown();
-        alert(`Too many tries — page locked for ${LOCK_MINUTES} minutes`);
-      } else {
-        note.innerText = `${tries} tries remaining`;
-        input.value='';
-        input.focus();
-      }
-    }
+    const val=input.value||"";
+    if(val===PASSWORD){setUnlocked(true);setTries(MAX_TRIES);setLockedUntil(0);updateUI();closeModal();showToast('✅ Commands unlocked');}
+    else{tries=Math.max(0,tries-1);setTries(tries);if(tries<=0){const until=now()+LOCK_MINUTES*60*1000;setLockedUntil(until);closeModal();updateUI();showToast(`Too many tries — locked for ${LOCK_MINUTES} min`);}
+    else{note.innerText=`${tries} tries remaining`;input.value='';input.focus();}}
   }
-
-  submit.addEventListener('click', attempt);
-  input.addEventListener('keydown',(e)=>{if(e.key==='Enter') attempt();});
-  setTimeout(()=>{ document.addEventListener('click', e=>{ if(!tpl.contains(e) && e!==unlockBtn) closeModal(); },{once:true});},150);
+  submit.addEventListener('click',attempt);input.addEventListener('keydown',e=>{if(e.key==='Enter') attempt();});
+  setTimeout(()=>{function onDocClick(e){if(!tpl.contains(e.target)&&e.target!==unlockBtn) closeModal();}document.addEventListener('click',onDocClick,{once:true});},150);
 }
 
-unlockBtn.addEventListener('click', showModal);
-
-renderCommands();
-updateUI();
+unlockBtn.addEventListener('click',showModal);
+renderCommands();setUnlocked(false);updateUI();
+if(getLockedUntil()>now()) startPageCountdown();
 </script>
 </body>
 </html>
